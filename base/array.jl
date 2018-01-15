@@ -1503,21 +1503,35 @@ _pairs(iter) = zip(_keys(iter), iter)
 
 Find the next linear index >= `i` of a `true` element of `A`, or `nothing` if not found.
 
+Indices are of the same type as those returned by [`keys(A)`](@ref)
+and [`pairs(A)`](@ref).
+
 # Examples
 ```jldoctest
+julia> A = [false, false, true, false]
+4-element Array{Bool,1}:
+ false
+ false
+  true
+ false
+
+julia> findnext(A, 1)
+3
+
+julia> findnext(A, 4) == nothing
+true
+
 julia> A = [false false; true false]
 2×2 Array{Bool,2}:
  false  false
   true  false
 
-julia> findnext(A, 1)
-2
-
-julia> findnext(A, 3)
+julia> findnext(A, CartesianIndex(1, 1))
+CartesianIndex(1, 2)
 ```
 """
-function findnext(A, start::Integer)
-    l = endof(A)
+function findnext(A, start)
+    l = last(_keys(A))
     i = start
     warned = false
     while i <= l
@@ -1556,7 +1570,7 @@ julia> A = [false, false, true, false]
  false
 
 julia> findfirst(A)
-2
+3
 
 julia> findfirst(falses(3)) == nothing
 true
@@ -1567,33 +1581,46 @@ julia> A = [false false; true false]
   true  false
 
 julia> findfirst(A)
-CartesianIndex(1, 2)
+CartesianIndex(2, 1)
 ```
 """
 findfirst(A) = isempty(A) ? nothing : findnext(A, first(_keys(A)))
 
 """
-    findnext(predicate::Function, A, i::Integer)
+    findnext(predicate::Function, A, i)
 
-Find the next linear index >= `i` of an element of `A` for which `predicate` returns `true`,
+Find the next index >= `i` of an element of `A` for which `predicate` returns `true`,
 or `nothing` if not found.
+
+Indices are of the same type as those returned by [`keys(A)`](@ref)
+and [`pairs(A)`](@ref).
 
 # Examples
 ```jldoctest
-julia> A = [1 4; 2 2]
-2×2 Array{Int64,2}:
- 1  4
- 2  2
+A = [1, 4, 2, 2]
+4-element Array{Int64,1}:
+ 1
+ 4
+ 2
+ 2
 
 julia> findnext(isodd, A, 1)
 1
 
 julia> findnext(isodd, A, 2) == nothing
 true
+
+julia> A = [1 4; 2 2]
+2×2 Array{Int64,2}:
+ 1  4
+ 2  2
+
+julia> findnext(isodd, A, CartesianIndex(1, 1))
+CartesianIndex(1, 1)
 ```
 """
-function findnext(testf::Function, A, start::Integer)
-    l = endof(A)
+function findnext(testf::Function, A, start)
+    l = last(_keys(A))
     i = start
     while i <= l
         if testf(A[i])
@@ -1626,7 +1653,7 @@ julia> findfirst(x -> x>10, A) == nothing
 true
 
 julia> findfirst(equalto(4), A)
-3
+2
 
 julia> A = [1 4; 2 2]
 2×2 Array{Int64,2}:
@@ -1634,34 +1661,47 @@ julia> A = [1 4; 2 2]
  2  2
 
 julia> findfirst(iseven, A)
-CartesianIndex(1, 2)
+CartesianIndex(2, 1)
 ```
 """
 findfirst(testf::Function, A) = isempty(A) ? nothing : findnext(testf, A, first(_keys(A)))
 
 """
-    findprev(A, i::Integer)
+    findprev(A, i)
 
-Find the previous linear index <= `i` of a `true` element of `A`, or `nothing` if not found.
+Find the previous index <= `i` of a `true` element of `A`, or `nothing` if not found.
+
+Indices are of the same type as those returned by [`keys(A)`](@ref)
+and [`pairs(A)`](@ref).
 
 # Examples
 ```jldoctest
+julia> A = [false, false, true, true]
+4-element Array{Bool,1}:
+ false
+ false
+  true
+  true
+
+julia> findprev(A, 3)
+3
+
+julia> findprev(A, 1) == nothing
+true
+
 julia> A = [false false; true true]
 2×2 Array{Bool,2}:
  false  false
   true   true
 
-julia> findprev(A,2)
-2
-
-julia> findprev(A,1) == nothing
-true
+julia> findprev(A, CartesianIndex(2, 1))
+CartesianIndex(2, 1)
 ```
 """
-function findprev(A, start::Integer)
+function findprev(A, start)
     i = start
     warned = false
-    while i >= 1
+    while i >= first(_keys(A))
         a = A[i]
         if !warned && !(a isa Bool)
             depwarn("In the future `findprev` will only work on boolean collections. Use `findprev(x->x!=0, A, start)` instead.", :findprev)
@@ -1713,28 +1753,41 @@ CartesianIndex(1, 2)
 findlast(A) = isempty(A) ? nothing : findprev(A, last(_keys(A)))
 
 """
-    findprev(predicate::Function, A, i::Integer)
+    findprev(predicate::Function, A, i)
 
-Find the previous linear index <= `i` of an element of `A` for which `predicate` returns `true`, or
+Find the previous index <= `i` of an element of `A` for which `predicate` returns `true`, or
 `nothing` if not found.
+
+Indices are of the same type as those returned by [`keys(A)`](@ref)
+and [`pairs(A)`](@ref).
 
 # Examples
 ```jldoctest
-julia> A = [4 6; 1 2]
-2×2 Array{Int64,2}:
- 4  6
- 1  2
+julia> A = [4, 6, 1, 2]
+4-element Array{Int64,1}:
+ 4
+ 6
+ 1
+ 2
 
 julia> findprev(isodd, A, 1) == nothing
 true
 
 julia> findprev(isodd, A, 3)
-2
+3
+
+julia> A = [4 6; 1 2]
+2×2 Array{Int64,2}:
+ 4  6
+ 1  2
+
+julia> findprev(isodd, A, CartesianIndex(1, 2))
+CartesianIndex(2, 1)
 ```
 """
-function findprev(testf::Function, A, start::Integer)
+function findprev(testf::Function, A, start)
     i = start
-    while i >= 1
+    while i >= first(_keys(A))
         testf(A[i]) && return i
         i = prevind(A, i)
     end
